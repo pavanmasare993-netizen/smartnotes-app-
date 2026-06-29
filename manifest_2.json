@@ -1,0 +1,15 @@
+{
+  "name": "SmartNotes AI Pro",
+  "short_name": "SmartNotes",
+  "description": "Google Keep style notes app with camera, gallery, voice notes, search, pinning, dark mode and an AI assistant.",
+  "start_url": "./index.html",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#FAF6EF",
+  "theme_color": "#2D2656",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}

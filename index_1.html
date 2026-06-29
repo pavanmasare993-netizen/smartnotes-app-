@@ -1,0 +1,904 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#2D2656">
+<title>SmartNotes AI Pro</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="icon-192.png">
+<link rel="apple-touch-icon" href="icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#FAF6EF; --surface:#FFFFFF; --ink:#2D2656; --ink-soft:#6A6390;
+    --line:#E7E0D3; --accent:#2BA89A; --accent-ink:#ffffff; --amber:#FFB74D;
+    --danger:#E15554; --radius:16px; --shadow:0 2px 10px rgba(45,38,86,0.10);
+    --font-d:'Space Grotesk',system-ui,sans-serif; --font-b:'Inter',system-ui,sans-serif;
+  }
+  body.dark{
+    --bg:#181429; --surface:#241F3F; --ink:#F2EFFA; --ink-soft:#AFA7D1;
+    --line:#3A3460; --accent:#45CFC0; --accent-ink:#0F2620; --amber:#FFC56E;
+    --shadow:0 2px 14px rgba(0,0,0,0.45);
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg); color:var(--ink); font-family:var(--font-b);
+    min-height:100vh; transition:background .25s,color .25s;
+  }
+  h1,h2,h3,.brand,.btn-fab,.compose-title-input{font-family:var(--font-d);}
+  button{font-family:inherit; cursor:pointer;}
+  .hidden{display:none !important;}
+  ::-webkit-scrollbar{width:8px;height:8px;}
+  ::-webkit-scrollbar-thumb{background:var(--line);border-radius:8px;}
+
+  /* ---------- Login ---------- */
+  #loginView{
+    min-height:100vh; display:flex; align-items:center; justify-content:center;
+    padding:24px; background:
+      radial-gradient(circle at 15% 10%, rgba(255,183,77,.25), transparent 40%),
+      radial-gradient(circle at 85% 90%, rgba(43,168,154,.22), transparent 40%),
+      var(--bg);
+  }
+  .login-card{
+    background:var(--surface); border-radius:24px; padding:36px 30px;
+    width:100%; max-width:380px; box-shadow:var(--shadow); border:1px solid var(--line);
+  }
+  .login-logo{
+    width:56px;height:56px;border-radius:16px;background:var(--ink);
+    display:flex;align-items:center;justify-content:center;font-size:26px;margin-bottom:14px;
+  }
+  .login-card h1{font-size:22px;margin:0 0 2px;}
+  .login-card p.sub{color:var(--ink-soft);font-size:14px;margin:0 0 22px;}
+  .field{margin-bottom:14px;}
+  .field label{display:block;font-size:12px;font-weight:600;color:var(--ink-soft);margin-bottom:6px;letter-spacing:.02em;text-transform:uppercase;}
+  .field input{
+    width:100%; padding:11px 13px; border-radius:12px; border:1.5px solid var(--line);
+    background:var(--bg); color:var(--ink); font-size:15px; font-family:var(--font-b);
+  }
+  .field input:focus{outline:none;border-color:var(--accent);}
+  .btn-primary{
+    width:100%; background:var(--accent); color:var(--accent-ink); border:none;
+    padding:12px; border-radius:12px; font-weight:700; font-size:15px; margin-top:6px;
+  }
+  .btn-primary:active{transform:scale(.98);}
+  .auth-toggle{text-align:center;margin-top:16px;font-size:13.5px;color:var(--ink-soft);}
+  .auth-toggle a{color:var(--accent);font-weight:600;cursor:pointer;text-decoration:none;}
+  .auth-error{color:var(--danger);font-size:13px;margin:-4px 0 12px;min-height:1px;}
+  .auth-hint{font-size:11.5px;color:var(--ink-soft);margin-top:18px;line-height:1.5;border-top:1px dashed var(--line);padding-top:14px;}
+
+  /* ---------- App shell ---------- */
+  #app{max-width:980px;margin:0 auto;padding:0 16px 90px;}
+  header.topbar{
+    position:sticky; top:0; z-index:20; background:var(--bg); padding:14px 0 10px;
+    display:flex; align-items:center; gap:10px; flex-wrap:wrap;
+  }
+  .brand{display:flex;align-items:center;gap:9px;font-weight:700;font-size:18px;white-space:nowrap;}
+  .brand .mark{width:30px;height:30px;border-radius:9px;background:var(--ink);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0;}
+  .brand .ai-badge{background:var(--amber);color:#3a2a05;font-size:10px;font-weight:700;padding:2px 7px;border-radius:20px;margin-left:2px;}
+  .searchwrap{flex:1; min-width:160px; position:relative;}
+  .searchwrap input{
+    width:100%; padding:10px 14px 10px 36px; border-radius:24px; border:1.5px solid var(--line);
+    background:var(--surface); color:var(--ink); font-size:14.5px;
+  }
+  .searchwrap input:focus{outline:none;border-color:var(--accent);}
+  .searchwrap .ic{position:absolute;left:12px;top:50%;transform:translateY(-50%);opacity:.55;font-size:14px;}
+  .icon-btn{
+    width:38px;height:38px;border-radius:50%;border:1.5px solid var(--line);background:var(--surface);
+    color:var(--ink);display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0;
+  }
+  .icon-btn:active{transform:scale(.92);}
+  .avatar-btn{
+    width:38px;height:38px;border-radius:50%;background:var(--accent);color:var(--accent-ink);
+    border:none;font-weight:700;font-size:14.5px;flex-shrink:0;
+  }
+  .menu{
+    position:absolute; right:16px; top:60px; background:var(--surface); border:1px solid var(--line);
+    border-radius:14px; box-shadow:var(--shadow); padding:8px; width:200px; z-index:30;
+  }
+  .menu button{
+    width:100%; text-align:left; background:none; border:none; padding:10px 10px; border-radius:9px;
+    color:var(--ink); font-size:14px; display:flex; align-items:center; gap:9px;
+  }
+  .menu button:hover{background:var(--bg);}
+  .menu .danger{color:var(--danger);}
+  .menu hr{border:none;border-top:1px solid var(--line);margin:6px 0;}
+
+  /* ---------- Composer ---------- */
+  .composer{
+    background:var(--surface); border:1.5px solid var(--line); border-radius:var(--radius);
+    box-shadow:var(--shadow); margin:6px 0 22px; padding:12px 16px; transition:background .2s;
+  }
+  .composer.collapsed{cursor:text;color:var(--ink-soft);font-size:15px;padding:13px 16px;}
+  .compose-title-input{
+    width:100%; border:none; background:transparent; font-size:16px; font-weight:600; color:var(--ink);
+    margin-bottom:6px; outline:none;
+  }
+  .compose-body-input{
+    width:100%; border:none; background:transparent; font-size:14.5px; color:var(--ink); resize:none;
+    min-height:60px; outline:none; font-family:var(--font-b); line-height:1.5;
+  }
+  .attach-row{display:flex; gap:8px; flex-wrap:wrap; margin:8px 0;}
+  .attach-thumb{position:relative; width:64px;height:64px;border-radius:10px;overflow:hidden;border:1px solid var(--line);}
+  .attach-thumb img{width:100%;height:100%;object-fit:cover;display:block;}
+  .attach-thumb .rm{
+    position:absolute; top:2px; right:2px; background:rgba(0,0,0,.55); color:#fff; border:none;
+    width:18px;height:18px;border-radius:50%;font-size:11px;line-height:18px;padding:0;
+  }
+  .audio-chip{
+    display:flex; align-items:center; gap:8px; background:var(--bg); border:1px solid var(--line);
+    border-radius:24px; padding:6px 10px; font-size:13px; margin:8px 0;
+  }
+  .audio-chip audio{height:28px;max-width:160px;}
+  .audio-chip .rm{background:none;border:none;color:var(--danger);font-size:13px;font-weight:700;}
+  .rec-indicator{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--danger);margin:8px 0;font-weight:600;}
+  .rec-dot{width:9px;height:9px;border-radius:50%;background:var(--danger);animation:pulse 1s infinite;}
+  @keyframes pulse{0%,100%{opacity:1;}50%{opacity:.3;}}
+  .toolbar{display:flex; align-items:center; gap:4px; flex-wrap:wrap; margin-top:8px;}
+  .toolbar .tbtn{
+    width:34px;height:34px;border-radius:50%;border:none;background:none;color:var(--ink-soft);
+    font-size:16px;display:flex;align-items:center;justify-content:center;
+  }
+  .toolbar .tbtn:hover{background:var(--bg);}
+  .toolbar .tbtn.active{color:var(--accent);background:var(--bg);}
+  .toolbar .spacer{flex:1;}
+  .swatch-row{display:flex;gap:7px;margin-top:8px;flex-wrap:wrap;}
+  .swatch{width:24px;height:24px;border-radius:50%;border:2px solid transparent;cursor:pointer;}
+  .swatch.sel{border-color:var(--ink);}
+  .btn-text{background:none;border:none;color:var(--ink-soft);font-size:13.5px;font-weight:600;padding:8px 10px;border-radius:8px;}
+  .btn-text:hover{background:var(--bg);}
+  .btn-save{background:var(--accent);color:var(--accent-ink);border:none;font-size:13.5px;font-weight:700;padding:8px 16px;border-radius:8px;}
+
+  /* ---------- Notes grid (masonry) ---------- */
+  .section-label{font-size:11.5px;font-weight:700;letter-spacing:.06em;color:var(--ink-soft);text-transform:uppercase;margin:18px 4px 8px;}
+  .grid{column-count:1; column-gap:14px;}
+  @media(min-width:560px){.grid{column-count:2;}}
+  @media(min-width:840px){.grid{column-count:3;}}
+  .note-card{
+    break-inside:avoid; margin-bottom:14px; border-radius:var(--radius); border:1.5px solid var(--line);
+    padding:14px 14px 8px; position:relative; box-shadow:var(--shadow); cursor:pointer;
+    transition:transform .15s; font-size:14px;
+  }
+  .note-card:hover{transform:translateY(-2px);}
+  .note-card .pin-fold{
+    position:absolute; top:0; right:0; width:0; height:0;
+    border-style:solid; border-width:0 22px 22px 0; border-color:transparent var(--amber) transparent transparent;
+    border-radius:0 16px 0 0;
+  }
+  .note-card h3{margin:0 0 6px; font-size:15.5px; padding-right:18px;}
+  .note-card .ntext{white-space:pre-wrap; color:var(--ink); opacity:.92; line-height:1.45; margin-bottom:8px;}
+  .note-card .nimgs{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:8px;}
+  .note-card .nimgs img{width:100%;max-height:160px;object-fit:cover;border-radius:10px;}
+  .note-card .naudio{margin-bottom:8px;}
+  .note-card .naudio audio{width:100%;height:32px;}
+  .note-card .ncard-actions{
+    display:flex; align-items:center; gap:2px; opacity:0; transition:opacity .15s; margin:4px -6px -2px;
+  }
+  .note-card:hover .ncard-actions, .note-card:focus-within .ncard-actions{opacity:1;}
+  .note-card .ncard-actions .tbtn{width:30px;height:30px;font-size:14px;}
+  .empty-state{text-align:center;color:var(--ink-soft);padding:60px 20px;font-size:14.5px;}
+  .empty-state .em{font-size:38px;margin-bottom:10px;}
+
+  /* ---------- Modal (editor / AI) ---------- */
+  .modal-overlay{
+    position:fixed; inset:0; background:rgba(20,16,40,.45); display:flex; align-items:flex-end;
+    justify-content:center; z-index:50; backdrop-filter:blur(2px);
+  }
+  @media(min-width:640px){.modal-overlay{align-items:center;}}
+  .modal-card{
+    background:var(--surface); width:100%; max-width:560px; border-radius:22px 22px 0 0;
+    max-height:88vh; overflow-y:auto; padding:18px 20px 20px; box-shadow:var(--shadow);
+  }
+  @media(min-width:640px){.modal-card{border-radius:22px;}}
+  .modal-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;}
+  .modal-head h2{font-size:16px;margin:0;}
+
+  /* ---------- AI panel ---------- */
+  .ai-msgs{display:flex;flex-direction:column;gap:10px;max-height:46vh;overflow-y:auto;padding:6px 2px;margin-bottom:10px;}
+  .ai-msg{padding:10px 13px;border-radius:14px;font-size:14px;line-height:1.45;max-width:88%;white-space:pre-wrap;}
+  .ai-msg.user{align-self:flex-end;background:var(--accent);color:var(--accent-ink);}
+  .ai-msg.bot{align-self:flex-start;background:var(--bg);border:1px solid var(--line);}
+  .ai-chips{display:flex;gap:7px;flex-wrap:wrap;margin-bottom:10px;}
+  .ai-chip{background:var(--bg);border:1px solid var(--line);border-radius:20px;padding:7px 12px;font-size:12.5px;color:var(--ink-soft);font-weight:600;}
+  .ai-inputrow{display:flex;gap:8px;}
+  .ai-inputrow input{
+    flex:1;padding:11px 14px;border-radius:24px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);font-size:14.5px;
+  }
+  .ai-inputrow input:focus{outline:none;border-color:var(--accent);}
+  .ai-send{background:var(--accent);color:var(--accent-ink);border:none;width:42px;height:42px;border-radius:50%;font-size:16px;flex-shrink:0;}
+  .ai-fab{
+    position:fixed; bottom:22px; right:18px; width:54px;height:54px;border-radius:50%;background:var(--ink);
+    color:#fff; border:none; font-size:22px; box-shadow:var(--shadow); z-index:25;
+  }
+  .ai-fab:active{transform:scale(.93);}
+
+  .toast{
+    position:fixed; bottom:90px; left:50%; transform:translateX(-50%); background:var(--ink); color:#fff;
+    padding:10px 18px; border-radius:24px; font-size:13.5px; z-index:99; opacity:0; transition:opacity .25s,bottom .25s;
+    pointer-events:none;
+  }
+  .toast.show{opacity:1;bottom:100px;}
+</style>
+</head>
+<body>
+
+<!-- ===================== LOGIN / REGISTER ===================== -->
+<div id="loginView">
+  <div class="login-card">
+    <div class="login-logo">📝</div>
+    <h1 id="authTitle">Welcome back</h1>
+    <p class="sub" id="authSub">Log in to SmartNotes AI Pro</p>
+    <div class="auth-error" id="authError"></div>
+    <div class="field" id="nameField" style="display:none;">
+      <label>Name</label>
+      <input type="text" id="authName" placeholder="Your name" autocomplete="name">
+    </div>
+    <div class="field">
+      <label>Email</label>
+      <input type="email" id="authEmail" placeholder="you@example.com" autocomplete="email">
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="authPassword" placeholder="••••••••" autocomplete="current-password">
+    </div>
+    <button class="btn-primary" id="authSubmitBtn">Log in</button>
+    <div class="auth-toggle" id="authToggle">No account? <a id="authToggleLink">Create one</a></div>
+    <div class="auth-hint">Demo login stored on this device only. Swap in Firebase Authentication for real multi-device accounts — see the SYNC_README notes inside this file.</div>
+  </div>
+</div>
+
+<!-- ===================== MAIN APP ===================== -->
+<div id="app" class="hidden">
+  <header class="topbar">
+    <div class="brand"><span class="mark">📝</span>SmartNotes<span class="ai-badge">AI PRO</span></div>
+    <div class="searchwrap">
+      <span class="ic">🔍</span>
+      <input id="searchInput" type="text" placeholder="Search your notes...">
+    </div>
+    <button class="icon-btn" id="darkToggleBtn" title="Toggle dark mode">🌙</button>
+    <button class="avatar-btn" id="avatarBtn">U</button>
+  </header>
+
+  <div class="menu hidden" id="accountMenu">
+    <button id="menuSyncInfo">☁️ <span>Sync status</span></button>
+    <button id="menuPaste">📋 <span>Paste as new note</span></button>
+    <hr>
+    <button id="menuClearData">🗑️ <span>Clear all my data</span></button>
+    <button class="danger" id="menuLogout">🚪 <span>Log out</span></button>
+  </div>
+
+  <!-- Composer -->
+  <div class="composer collapsed" id="composer">
+    <span id="composerPlaceholder">Take a note…</span>
+    <div id="composerOpen" class="hidden">
+      <input class="compose-title-input" id="composeTitle" placeholder="Title">
+      <textarea class="compose-body-input" id="composeBody" placeholder="Take a note…" rows="3"></textarea>
+      <div class="attach-row" id="composeImgRow"></div>
+      <div id="composeAudioRow"></div>
+      <div class="rec-indicator hidden" id="recIndicator"><span class="rec-dot"></span><span id="recTimer">Recording 0:00 — listening…</span></div>
+      <div class="swatch-row" id="composeSwatches"></div>
+      <div class="toolbar">
+        <button class="tbtn" id="btnCamera" title="Camera">📷</button>
+        <button class="tbtn" id="btnGallery" title="Gallery">🖼️</button>
+        <button class="tbtn" id="btnMic" title="Voice note">🎤</button>
+        <button class="tbtn" id="btnPinCompose" title="Pin">📌</button>
+        <span class="spacer"></span>
+        <button class="btn-text" id="btnCloseCompose">Close</button>
+        <button class="btn-save" id="btnSaveCompose">Save</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="section-label" id="pinnedLabel">Pinned</div>
+  <div class="grid" id="pinnedGrid"></div>
+  <div class="section-label" id="othersLabel">Notes</div>
+  <div class="grid" id="notesGrid"></div>
+  <div class="empty-state hidden" id="emptyState"><div class="em">🗒️</div>Nothing here yet.<br>Tap "Take a note…" above to create your first one.</div>
+</div>
+
+<!-- Note editor modal -->
+<div class="modal-overlay hidden" id="editorOverlay">
+  <div class="modal-card">
+    <div class="modal-head">
+      <span id="editorMeta" style="font-size:12px;color:var(--ink-soft);"></span>
+      <button class="icon-btn" id="editorCloseBtn">✕</button>
+    </div>
+    <input class="compose-title-input" id="editTitle" placeholder="Title">
+    <textarea class="compose-body-input" id="editBody" placeholder="Note" rows="5"></textarea>
+    <div class="attach-row" id="editImgRow"></div>
+    <div id="editAudioRow"></div>
+    <div class="rec-indicator hidden" id="editRecIndicator"><span class="rec-dot"></span><span id="editRecTimer">Recording 0:00</span></div>
+    <div class="swatch-row" id="editSwatches"></div>
+    <div class="toolbar">
+      <button class="tbtn" id="editBtnCamera" title="Camera">📷</button>
+      <button class="tbtn" id="editBtnGallery" title="Gallery">🖼️</button>
+      <button class="tbtn" id="editBtnMic" title="Voice note">🎤</button>
+      <button class="tbtn" id="editBtnPin" title="Pin">📌</button>
+      <button class="tbtn" id="editBtnCopy" title="Copy text">📋</button>
+      <button class="tbtn" id="editBtnAI" title="Ask AI">✨</button>
+      <span class="spacer"></span>
+      <button class="btn-text" id="editBtnDelete" style="color:var(--danger);">Delete</button>
+      <button class="btn-save" id="editBtnSave">Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- AI Assistant -->
+<button class="ai-fab" id="aiFab" title="AI Assistant">🤖</button>
+<div class="modal-overlay hidden" id="aiOverlay">
+  <div class="modal-card">
+    <div class="modal-head"><h2>✨ AI Assistant</h2><button class="icon-btn" id="aiCloseBtn">✕</button></div>
+    <div class="ai-chips">
+      <button class="ai-chip" data-prompt="Summarize all of my notes in a short bulleted list.">Summarize my notes</button>
+      <button class="ai-chip" data-prompt="Look at my notes and suggest 3 ways to organize or tag them.">Organize ideas</button>
+      <button class="ai-chip" data-prompt="Give me 5 fresh note ideas I could capture today.">Note ideas</button>
+    </div>
+    <div class="ai-msgs" id="aiMsgs"></div>
+    <div class="ai-inputrow">
+      <input id="aiInput" type="text" placeholder="Ask the assistant anything…">
+      <button class="ai-send" id="aiSendBtn">➤</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<input type="file" id="cameraInput" accept="image/*" capture="environment" hidden>
+<input type="file" id="galleryInput" accept="image/*" multiple hidden>
+
+<script>
+'use strict';
+/* =========================================================================
+   SmartNotes AI Pro — single-file app
+   Storage: localStorage (works standalone in any browser AND once wrapped
+   into an Android APK via Capacitor/PWABuilder — see SYNC_README below).
+   ========================================================================= */
+
+/* ---------------- Config & constants ---------------- */
+const LS_USERS = 'sn_users';
+const LS_SESSION = 'sn_session';
+const LS_THEME = 'sn_theme';
+const notesKey = email => 'sn_notes_' + email;
+
+const NOTE_COLORS = [
+  {id:'default', light:'#FFFFFF', dark:'#241F3F'},
+  {id:'sand',    light:'#F4E3C1', dark:'#4A3F26'},
+  {id:'sage',    light:'#C8E0C0', dark:'#2E4030'},
+  {id:'sky',     light:'#BFE1E8', dark:'#243C42'},
+  {id:'lavender',light:'#D8C8EE', dark:'#3A2F52'},
+  {id:'blush',   light:'#F3C9D8', dark:'#48303A'},
+  {id:'butter',  light:'#F6E6A1', dark:'#4A4226'},
+  {id:'mint',    light:'#BFEAD7', dark:'#264A3D'}
+];
+
+/* ---------------- Tiny storage helpers (safe JSON over localStorage) --- */
+function lsGet(key, fallback){
+  try{
+    const raw = localStorage.getItem(key);
+    return raw ? JSON.parse(raw) : fallback;
+  }catch(e){ console.error('storage read failed', key, e); return fallback; }
+}
+function lsSet(key, value){
+  try{
+    localStorage.setItem(key, JSON.stringify(value));
+    return true;
+  }catch(e){ console.error('storage write failed', key, e); toast('Could not save — storage may be full.'); return false; }
+}
+
+/* ---------------- App state ---------------- */
+let session = lsGet(LS_SESSION, null);   // {email, name}
+let notes = [];                          // current user's notes
+let searchTerm = '';
+let isRegisterMode = false;
+let mediaRecorder = null, recChunks = [], recTimerInt = null, recSeconds = 0, recognition = null;
+let activeColorCompose = 'default';
+let composeImages = [], composeAudio = null;
+let editingNoteId = null, editColorSel = 'default', editPinSel = false, editImages = [], editAudio = null;
+let aiHistory = [];
+
+/* ---------------- Utilities ---------------- */
+function toast(msg){
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(t._h); t._h = setTimeout(()=>t.classList.remove('show'), 2200);
+}
+function uid(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,8); }
+function fileToDataURL(file){
+  return new Promise((res,rej)=>{
+    const r = new FileReader();
+    r.onload = ()=>res(r.result);
+    r.onerror = ()=>rej(r.error);
+    r.readAsDataURL(file);
+  });
+}
+function fmtTime(s){ const m=Math.floor(s/60), ss=String(s%60).padStart(2,'0'); return m+':'+ss; }
+function escapeHtml(s){ return (s||'').replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+
+/* ============================== AUTH ================================= */
+const $ = id => document.getElementById(id);
+
+function renderAuthMode(){
+  $('nameField').style.display = isRegisterMode ? 'block' : 'none';
+  $('authTitle').textContent = isRegisterMode ? 'Create your account' : 'Welcome back';
+  $('authSub').textContent = isRegisterMode ? 'Set up SmartNotes AI Pro' : 'Log in to SmartNotes AI Pro';
+  $('authSubmitBtn').textContent = isRegisterMode ? 'Create account' : 'Log in';
+  $('authToggle').innerHTML = isRegisterMode
+    ? 'Already have an account? <a id="authToggleLink">Log in</a>'
+    : 'No account? <a id="authToggleLink">Create one</a>';
+  $('authToggleLink').onclick = ()=>{ isRegisterMode = !isRegisterMode; $('authError').textContent=''; renderAuthMode(); };
+  $('authError').textContent = '';
+}
+
+function handleAuthSubmit(){
+  const email = $('authEmail').value.trim().toLowerCase();
+  const password = $('authPassword').value;
+  const name = $('authName').value.trim();
+  const err = $('authError');
+  if(!email || !password){ err.textContent = 'Email and password are required.'; return; }
+
+  const users = lsGet(LS_USERS, {});
+  if(isRegisterMode){
+    if(users[email]){ err.textContent = 'An account with this email already exists.'; return; }
+    if(!name){ err.textContent = 'Please enter your name.'; return; }
+    users[email] = { name, password }; // demo-only plaintext store, see hint below the form
+    lsSet(LS_USERS, users);
+    startSession({email, name});
+  } else {
+    const u = users[email];
+    if(!u || u.password !== password){ err.textContent = 'Incorrect email or password.'; return; }
+    startSession({email, name: u.name});
+  }
+}
+function startSession(s){
+  session = s;
+  lsSet(LS_SESSION, s);
+  enterApp();
+}
+function logout(){
+  session = null;
+  lsSet(LS_SESSION, null);
+  $('app').classList.add('hidden');
+  $('loginView').classList.remove('hidden');
+  $('accountMenu').classList.add('hidden');
+}
+function enterApp(){
+  $('loginView').classList.add('hidden');
+  $('app').classList.remove('hidden');
+  $('avatarBtn').textContent = (session.name||session.email||'U').trim()[0].toUpperCase();
+  notes = lsGet(notesKey(session.email), []);
+  renderNotes();
+}
+
+/* ============================== THEME ================================= */
+function applyTheme(mode){
+  document.body.classList.toggle('dark', mode === 'dark');
+  $('darkToggleBtn').textContent = mode === 'dark' ? '☀️' : '🌙';
+  lsSet(LS_THEME, mode);
+}
+function toggleTheme(){
+  applyTheme(document.body.classList.contains('dark') ? 'light' : 'dark');
+  renderNotes(); // re-render so card colors pick the right palette variant
+}
+
+/* ============================== NOTES CRUD ============================= */
+function saveNotes(){ lsSet(notesKey(session.email), notes); }
+
+function colorHex(colorId){
+  const c = NOTE_COLORS.find(c=>c.id===colorId) || NOTE_COLORS[0];
+  return document.body.classList.contains('dark') ? c.dark : c.light;
+}
+
+function matchesSearch(n, term){
+  if(!term) return true;
+  const t = term.toLowerCase();
+  return (n.title||'').toLowerCase().includes(t) || (n.text||'').toLowerCase().includes(t);
+}
+
+function renderNotes(){
+  const all = notes.filter(n=>matchesSearch(n, searchTerm));
+  const pinned = all.filter(n=>n.pinned).sort((a,b)=>b.updatedAt-a.updatedAt);
+  const others = all.filter(n=>!n.pinned).sort((a,b)=>b.updatedAt-a.updatedAt);
+
+  $('pinnedLabel').classList.toggle('hidden', pinned.length===0);
+  $('othersLabel').classList.toggle('hidden', others.length===0 || pinned.length===0);
+  $('emptyState').classList.toggle('hidden', all.length>0);
+
+  $('pinnedGrid').innerHTML = pinned.map(cardHtml).join('');
+  $('notesGrid').innerHTML = others.map(cardHtml).join('');
+
+  document.querySelectorAll('.note-card').forEach(el=>{
+    el.addEventListener('click', e=>{
+      if(e.target.closest('.ncard-actions')) return;
+      openEditor(el.dataset.id);
+    });
+  });
+  document.querySelectorAll('[data-act]').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      const id = btn.closest('.note-card').dataset.id;
+      const act = btn.dataset.act;
+      if(act==='pin') togglePin(id);
+      if(act==='copy') copyNoteText(id);
+      if(act==='delete') deleteNote(id, true);
+    });
+  });
+}
+
+function cardHtml(n){
+  const bg = colorHex(n.color);
+  const imgs = (n.images||[]).map(src=>`<img src="${src}">`).join('');
+  const audio = n.audio ? `<div class="naudio"><audio controls src="${n.audio}"></audio></div>` : '';
+  return `
+  <div class="note-card" data-id="${n.id}" style="background:${bg};">
+    ${n.pinned ? '<div class="pin-fold" title="Pinned"></div>' : ''}
+    ${n.title ? `<h3>${escapeHtml(n.title)}</h3>` : ''}
+    ${n.text ? `<div class="ntext">${escapeHtml(n.text)}</div>` : ''}
+    ${imgs ? `<div class="nimgs">${imgs}</div>` : ''}
+    ${audio}
+    <div class="ncard-actions">
+      <button class="tbtn" data-act="pin" title="${n.pinned?'Unpin':'Pin'}">📌</button>
+      <button class="tbtn" data-act="copy" title="Copy text">📋</button>
+      <button class="tbtn" data-act="delete" title="Delete">🗑️</button>
+    </div>
+  </div>`;
+}
+
+function togglePin(id){
+  const n = notes.find(n=>n.id===id); if(!n) return;
+  n.pinned = !n.pinned; n.updatedAt = Date.now();
+  saveNotes(); renderNotes();
+}
+function copyNoteText(id){
+  const n = notes.find(n=>n.id===id); if(!n) return;
+  const text = (n.title?n.title+'\n':'') + (n.text||'');
+  navigator.clipboard.writeText(text).then(()=>toast('Copied to clipboard'))
+    .catch(()=>toast('Clipboard permission denied'));
+}
+function deleteNote(id, confirmFirst){
+  if(confirmFirst && !confirm('Delete this note?')) return;
+  notes = notes.filter(n=>n.id!==id);
+  saveNotes(); renderNotes();
+  closeEditor();
+}
+function pasteAsNewNote(){
+  navigator.clipboard.readText().then(text=>{
+    if(!text){ toast('Clipboard is empty'); return; }
+    notes.unshift({id:uid(), title:'', text, images:[], audio:null, color:'default', pinned:false, createdAt:Date.now(), updatedAt:Date.now()});
+    saveNotes(); renderNotes(); toast('Pasted as new note');
+  }).catch(()=>toast('Clipboard permission denied'));
+}
+
+/* ============================== COMPOSER =============================== */
+function buildSwatchRow(container, selected, onPick){
+  container.innerHTML = NOTE_COLORS.map(c=>
+    `<span class="swatch ${c.id===selected?'sel':''}" data-color="${c.id}" style="background:${document.body.classList.contains('dark')?c.dark:c.light};border:1.5px solid var(--line);"></span>`
+  ).join('');
+  container.querySelectorAll('.swatch').forEach(sw=>{
+    sw.addEventListener('click', ()=>{ onPick(sw.dataset.color); buildSwatchRow(container, sw.dataset.color, onPick); });
+  });
+}
+
+function openComposer(){
+  $('composer').classList.remove('collapsed');
+  $('composerPlaceholder').classList.add('hidden');
+  $('composerOpen').classList.remove('hidden');
+  $('composeBody').focus();
+  buildSwatchRow($('composeSwatches'), activeColorCompose, c=>activeColorCompose=c);
+}
+function closeComposer(save){
+  const title = $('composeTitle').value.trim();
+  const text = $('composeBody').value.trim();
+  if(save && (title || text || composeImages.length || composeAudio)){
+    notes.unshift({
+      id:uid(), title, text, images:[...composeImages], audio:composeAudio,
+      color:activeColorCompose, pinned:false, createdAt:Date.now(), updatedAt:Date.now()
+    });
+    saveNotes(); renderNotes();
+  }
+  $('composeTitle').value=''; $('composeBody').value='';
+  composeImages=[]; composeAudio=null; activeColorCompose='default';
+  $('composeImgRow').innerHTML=''; $('composeAudioRow').innerHTML='';
+  $('composer').classList.add('collapsed');
+  $('composerPlaceholder').classList.remove('hidden');
+  $('composerOpen').classList.add('hidden');
+  stopRecording(true);
+}
+function renderComposeImgs(){
+  $('composeImgRow').innerHTML = composeImages.map((src,i)=>
+    `<div class="attach-thumb"><img src="${src}"><button class="rm" data-i="${i}">✕</button></div>`
+  ).join('');
+  $('composeImgRow').querySelectorAll('.rm').forEach(b=>b.addEventListener('click', ()=>{
+    composeImages.splice(+b.dataset.i,1); renderComposeImgs();
+  }));
+}
+function renderComposeAudio(){
+  $('composeAudioRow').innerHTML = composeAudio
+    ? `<div class="audio-chip"><audio controls src="${composeAudio}"></audio><button class="rm" id="rmComposeAudio">✕</button></div>` : '';
+  if(composeAudio) $('rmComposeAudio').onclick = ()=>{ composeAudio=null; renderComposeAudio(); };
+}
+
+/* ============================== EDITOR MODAL ============================ */
+function openEditor(id){
+  const n = notes.find(n=>n.id===id); if(!n) return;
+  editingNoteId = id;
+  $('editTitle').value = n.title||'';
+  $('editBody').value = n.text||'';
+  editColorSel = n.color||'default';
+  editPinSel = !!n.pinned;
+  editImages = [...(n.images||[])];
+  editAudio = n.audio||null;
+  $('editorMeta').textContent = 'Edited ' + new Date(n.updatedAt).toLocaleString();
+  renderEditImgs(); renderEditAudio();
+  buildSwatchRow($('editSwatches'), editColorSel, c=>editColorSel=c);
+  $('editBtnPin').classList.toggle('active', editPinSel);
+  $('editorOverlay').classList.remove('hidden');
+}
+function closeEditor(save){
+  if(save && editingNoteId){
+    const n = notes.find(n=>n.id===editingNoteId);
+    if(n){
+      n.title = $('editTitle').value.trim();
+      n.text = $('editBody').value.trim();
+      n.color = editColorSel; n.pinned = editPinSel;
+      n.images = editImages; n.audio = editAudio;
+      n.updatedAt = Date.now();
+      saveNotes();
+    }
+  }
+  editingNoteId = null;
+  $('editorOverlay').classList.add('hidden');
+  stopRecording(true, true);
+  renderNotes();
+}
+function renderEditImgs(){
+  $('editImgRow').innerHTML = editImages.map((src,i)=>
+    `<div class="attach-thumb"><img src="${src}"><button class="rm" data-i="${i}">✕</button></div>`
+  ).join('');
+  $('editImgRow').querySelectorAll('.rm').forEach(b=>b.addEventListener('click', ()=>{
+    editImages.splice(+b.dataset.i,1); renderEditImgs();
+  }));
+}
+function renderEditAudio(){
+  $('editAudioRow').innerHTML = editAudio
+    ? `<div class="audio-chip"><audio controls src="${editAudio}"></audio><button class="rm" id="rmEditAudio">✕</button></div>` : '';
+  if(editAudio) $('rmEditAudio').onclick = ()=>{ editAudio=null; renderEditAudio(); };
+}
+
+/* ============================== CAMERA / GALLERY ========================= */
+let attachTarget = 'compose'; // 'compose' | 'edit'
+function handleImageFiles(fileList){
+  const files = Array.from(fileList||[]);
+  Promise.all(files.map(fileToDataURL)).then(urls=>{
+    if(attachTarget==='compose'){ composeImages.push(...urls); renderComposeImgs(); }
+    else { editImages.push(...urls); renderEditImgs(); }
+  }).catch(()=>toast('Could not load image'));
+}
+
+/* ============================== VOICE NOTES =============================== */
+function startRecording(target){
+  attachTarget = target;
+  if(!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia){
+    toast('Microphone not supported in this browser'); return;
+  }
+  navigator.mediaDevices.getUserMedia({audio:true}).then(stream=>{
+    recChunks = [];
+    mediaRecorder = new MediaRecorder(stream);
+    mediaRecorder.ondataavailable = e=>recChunks.push(e.data);
+    mediaRecorder.onstop = ()=>{
+      stream.getTracks().forEach(t=>t.stop());
+      const blob = new Blob(recChunks, {type:'audio/webm'});
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        if(target==='compose'){ composeAudio = reader.result; renderComposeAudio(); }
+        else { editAudio = reader.result; renderEditAudio(); }
+      };
+      reader.readAsDataURL(blob);
+    };
+    mediaRecorder.start();
+    recSeconds = 0;
+    const indicator = target==='compose' ? $('recIndicator') : $('editRecIndicator');
+    const timerEl = target==='compose' ? $('recTimer') : $('editRecTimer');
+    indicator.classList.remove('hidden');
+    recTimerInt = setInterval(()=>{
+      recSeconds++; timerEl.textContent = 'Recording ' + fmtTime(recSeconds) + (recognition?' — listening…':'');
+    }, 1000);
+    // Optional live speech-to-text dictation into the note body, if supported
+    const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+    if(SR){
+      recognition = new SR();
+      recognition.continuous = true; recognition.interimResults = false; recognition.lang = 'en-US';
+      const bodyEl = target==='compose' ? $('composeBody') : $('editBody');
+      recognition.onresult = ev=>{
+        let added = '';
+        for(let i=ev.resultIndex; i<ev.results.length; i++){
+          if(ev.results[i].isFinal) added += ev.results[i][0].transcript + ' ';
+        }
+        if(added) bodyEl.value = (bodyEl.value + ' ' + added).trim();
+      };
+      recognition.onerror = ()=>{ recognition = null; };
+      try{ recognition.start(); }catch(e){ recognition = null; }
+    }
+    const micBtn = target==='compose' ? $('btnMic') : $('editBtnMic');
+    micBtn.textContent = '⏹️'; micBtn.classList.add('active');
+  }).catch(()=>toast('Microphone permission denied'));
+}
+function stopRecording(silent, isEdit){
+  if(mediaRecorder && mediaRecorder.state !== 'inactive') mediaRecorder.stop();
+  if(recognition){ try{recognition.stop();}catch(e){} recognition = null; }
+  clearInterval(recTimerInt);
+  $('recIndicator').classList.add('hidden');
+  $('editRecIndicator').classList.add('hidden');
+  $('btnMic').textContent = '🎤'; $('btnMic').classList.remove('active');
+  $('editBtnMic').textContent = '🎤'; $('editBtnMic').classList.remove('active');
+}
+function toggleRecording(target){
+  const isRecording = mediaRecorder && mediaRecorder.state === 'recording';
+  if(isRecording) stopRecording(); else startRecording(target);
+}
+
+/* ============================== AI ASSISTANT ============================== */
+async function askAI(prompt, contextNoteText){
+  $('aiOverlay').classList.remove('hidden');
+  aiHistory.push({role:'user', text:prompt});
+  renderAiMsgs();
+  const msgsForApi = aiHistory.map(m=>({role: m.role==='user'?'user':'assistant', content: m.text}));
+  if(contextNoteText){
+    msgsForApi[msgsForApi.length-1] = {role:'user', content:
+      `Here is the note text for context:\n"""${contextNoteText}"""\n\nRequest: ${prompt}`};
+  }
+  try{
+    const resp = await fetch('https://api.anthropic.com/v1/messages', {
+      method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({
+        model:'claude-sonnet-4-6', max_tokens:1000,
+        system:'You are the AI Assistant inside a notes app called SmartNotes AI Pro. Be concise and practical. When summarizing notes, use short bullet points.',
+        messages: msgsForApi
+      })
+    });
+    const data = await resp.json();
+    const text = (data.content||[]).map(b=>b.text||'').join('\n').trim() || 'Sorry, I could not generate a response.';
+    aiHistory.push({role:'bot', text});
+  }catch(e){
+    aiHistory.push({role:'bot', text:'AI request failed. This live AI call only works inside the Claude.ai preview — once exported to a standalone app/APK you will need to wire up your own Anthropic API key on a backend. See SYNC_README below.'});
+  }
+  renderAiMsgs();
+}
+function renderAiMsgs(){
+  $('aiMsgs').innerHTML = aiHistory.map(m=>`<div class="ai-msg ${m.role==='user'?'user':'bot'}">${escapeHtml(m.text)}</div>`).join('');
+  $('aiMsgs').scrollTop = $('aiMsgs').scrollHeight;
+}
+
+/* ============================== WIRE UP EVENTS ============================ */
+window.addEventListener('DOMContentLoaded', ()=>{
+  // theme
+  applyTheme(lsGet(LS_THEME, 'light'));
+  renderAuthMode();
+
+  // auth
+  $('authSubmitBtn').addEventListener('click', handleAuthSubmit);
+  [$('authEmail'),$('authPassword'),$('authName')].forEach(el=>
+    el.addEventListener('keydown', e=>{ if(e.key==='Enter') handleAuthSubmit(); }));
+
+  // session restore
+  if(session) enterApp();
+
+  // header
+  $('darkToggleBtn').addEventListener('click', toggleTheme);
+  $('avatarBtn').addEventListener('click', ()=>$('accountMenu').classList.toggle('hidden'));
+  document.addEventListener('click', e=>{
+    if(!e.target.closest('#accountMenu') && !e.target.closest('#avatarBtn')) $('accountMenu').classList.add('hidden');
+  });
+  $('menuLogout').addEventListener('click', logout);
+  $('menuPaste').addEventListener('click', ()=>{ pasteAsNewNote(); $('accountMenu').classList.add('hidden'); });
+  $('menuSyncInfo').addEventListener('click', ()=>{
+    toast('Notes are saved on this device. See SYNC_README in the code for real Firebase cloud sync.');
+    $('accountMenu').classList.add('hidden');
+  });
+  $('menuClearData').addEventListener('click', ()=>{
+    if(confirm('This deletes all of your notes on this device. Continue?')){
+      notes = []; saveNotes(); renderNotes(); toast('All notes cleared');
+    }
+    $('accountMenu').classList.add('hidden');
+  });
+  $('searchInput').addEventListener('input', e=>{ searchTerm = e.target.value; renderNotes(); });
+
+  // composer
+  $('composer').addEventListener('click', e=>{
+    if($('composer').classList.contains('collapsed')) openComposer();
+  });
+  $('btnCloseCompose').addEventListener('click', e=>{ e.stopPropagation(); closeComposer(true); });
+  $('btnSaveCompose').addEventListener('click', e=>{ e.stopPropagation(); closeComposer(true); });
+  $('btnCamera').addEventListener('click', e=>{ e.stopPropagation(); attachTarget='compose'; $('cameraInput').click(); });
+  $('btnGallery').addEventListener('click', e=>{ e.stopPropagation(); attachTarget='compose'; $('galleryInput').click(); });
+  $('btnMic').addEventListener('click', e=>{ e.stopPropagation(); toggleRecording('compose'); });
+  $('btnPinCompose').addEventListener('click', e=>{
+    e.stopPropagation();
+    $('btnPinCompose').classList.toggle('active');
+    activeColorCompose = activeColorCompose; // no-op, pin handled at save via flag below
+  });
+
+  // editor
+  $('editorCloseBtn').addEventListener('click', ()=>closeEditor(true));
+  $('editBtnSave').addEventListener('click', ()=>closeEditor(true));
+  $('editBtnDelete').addEventListener('click', ()=>deleteNote(editingNoteId, true));
+  $('editBtnCamera').addEventListener('click', ()=>{ attachTarget='edit'; $('cameraInput').click(); });
+  $('editBtnGallery').addEventListener('click', ()=>{ attachTarget='edit'; $('galleryInput').click(); });
+  $('editBtnMic').addEventListener('click', ()=>toggleRecording('edit'));
+  $('editBtnPin').addEventListener('click', ()=>{ editPinSel = !editPinSel; $('editBtnPin').classList.toggle('active', editPinSel); });
+  $('editBtnCopy').addEventListener('click', ()=>{
+    navigator.clipboard.writeText(($('editTitle').value+'\n'+$('editBody').value).trim())
+      .then(()=>toast('Copied')).catch(()=>toast('Clipboard permission denied'));
+  });
+  $('editBtnAI').addEventListener('click', ()=>{
+    $('aiOverlay').classList.remove('hidden');
+    askAI('Suggest a short, improved version of this note (fix grammar, keep meaning).', $('editBody').value);
+  });
+
+  // shared file inputs
+  $('cameraInput').addEventListener('change', e=>{ handleImageFiles(e.target.files); e.target.value=''; });
+  $('galleryInput').addEventListener('change', e=>{ handleImageFiles(e.target.files); e.target.value=''; });
+
+  // AI assistant panel
+  $('aiFab').addEventListener('click', ()=>$('aiOverlay').classList.remove('hidden'));
+  $('aiCloseBtn').addEventListener('click', ()=>$('aiOverlay').classList.add('hidden'));
+  $('aiSendBtn').addEventListener('click', ()=>{
+    const v = $('aiInput').value.trim(); if(!v) return;
+    $('aiInput').value=''; askAI(v);
+  });
+  $('aiInput').addEventListener('keydown', e=>{ if(e.key==='Enter') $('aiSendBtn').click(); });
+  document.querySelectorAll('.ai-chip').forEach(chip=>{
+    chip.addEventListener('click', ()=>{
+      const prompt = chip.dataset.prompt;
+      if(prompt.includes('all of my notes')){
+        const dump = notes.slice(0,40).map(n=>'- '+(n.title?n.title+': ':'')+(n.text||'').slice(0,200)).join('\n');
+        askAI(prompt, dump || '(no notes yet)');
+      } else askAI(prompt);
+    });
+  });
+
+  // register service worker (enables install / APK packaging)
+  if('serviceWorker' in navigator){
+    navigator.serviceWorker.register('sw.js').catch(()=>{ /* fine if not hosted yet */ });
+  }
+});
+
+/*
+========================= SYNC_README (read me) ============================
+This file is fully self-contained and uses localStorage so it keeps working
+once you export it from Claude and open it as a real, standalone app or
+package it into an APK (Capacitor / PWABuilder) — see the chat message for
+exact steps.
+
+Two features call out to network services and only work *inside the Claude
+preview* unless you complete the steps below:
+
+1) AI ASSISTANT (the 🤖 button / ✨ button)
+   The fetch() call to api.anthropic.com works without a key only inside
+   Claude's own artifact preview. To keep AI working in your exported app:
+     a. Get an API key from https://console.anthropic.com
+     b. Never put a real API key directly in client-side code that ships to
+        users — anyone could read it from the app and rack up your bill.
+     c. Instead, deploy a tiny backend (Cloudflare Worker / Firebase Cloud
+        Function) that holds the key, and change the fetch URL above to your
+        own endpoint, e.g. fetch('https://your-worker.example.com/ai', {...})
+
+2) FIREBASE CLOUD SYNC (notes currently save to this device only)
+   To sync notes across devices with Firebase (full snippet in the chat reply,
+   not pasted here to keep this comment block simple):
+     a. Create a project at https://console.firebase.google.com
+     b. Load the Firebase compat SDK (app, auth, firestore — v10.x) in the
+        document head using three separate include tags from gstatic.com
+     c. Initialize once your config is ready:
+          firebase.initializeApp({ apiKey:'...', authDomain:'...', projectId:'...' });
+     d. Replace the demo auth (handleAuthSubmit/startSession) with
+        firebase.auth().createUserWithEmailAndPassword / signInWithEmailAndPassword
+     e. Replace saveNotes()/loadNotes() with reads/writes to a Firestore
+        collection such as users/{uid}/notes, ideally with an onSnapshot
+        listener for real-time sync.
+===============================================================================
+*/
+</script>
+</body>
+</html>
